@@ -21,6 +21,14 @@
             cursor: pointer;
             margin: 5px;
         }
+        select {
+            padding: 10px;
+            font-size: 16px;
+            margin: 10px;
+        }
+        input[type="file"] {
+            margin: 10px;
+        }
         #sheet-music {
             margin-top: 20px;
         }
@@ -59,6 +67,23 @@ K:Bb
 "Ebm"_B/A/B z E ^F2 E>B | "Gm"G2 "Ebm"E>B "Gm"G4 ||
     </textarea>
     <br>
+    <label for="file-upload">Upload ABC File:</label>
+    <input type="file" id="file-upload" accept=".txt,.abc">
+    <br>
+    <label for="instrument-select">Choose Instrument:</label>
+    <select id="instrument-select">
+        <option value="0">Acoustic Grand Piano</option>
+        <option value="1">Bright Acoustic Piano</option>
+        <option value="2">Electric Grand Piano</option>
+        <option value="4">Electric Piano 1</option>
+        <option value="8">Celesta</option>
+        <option value="19">Church Organ</option>
+        <option value="24">Acoustic Guitar (nylon)</option>
+        <option value="40">Violin</option>
+        <option value="56">Trumpet</option>
+        <option value="73">Flute</option>
+    </select>
+    <br>
     <button onclick="playABC()">Play</button>
     <button onclick="stopABC()">Stop</button>
     <div id="sheet-music"></div>
@@ -76,6 +101,24 @@ K:Bb
             });
         }
 
+        // Handle file upload
+        document.getElementById('file-upload').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const text = e.target.result;
+                    document.getElementById('abc-input').value = text;
+                    renderSheetMusic(text); // Update sheet music with uploaded content
+                };
+                reader.onerror = function(e) {
+                    console.error('Error reading file:', e);
+                    alert('Error reading file. Please ensure it’s a valid text or ABC file.');
+                };
+                reader.readAsText(file);
+            }
+        });
+
         // Play ABC notation
         function playABC() {
             // Stop any existing playback
@@ -84,6 +127,7 @@ K:Bb
             }
 
             const abc = document.getElementById('abc-input').value;
+            const instrument = parseInt(document.getElementById('instrument-select').value, 10);
             // Render sheet music
             renderSheetMusic(abc);
 
@@ -96,7 +140,7 @@ K:Bb
                 visualObj: visualObj,
                 options: {
                     soundFontUrl: "https://paulrosen.github.io/midi-js-soundfonts/abcjs/",
-                    program: 0, // Acoustic Grand Piano
+                    program: instrument, // Use selected instrument
                     midiOutputType: 'link'
                 }
             }).then(() => {
