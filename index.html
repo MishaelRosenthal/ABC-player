@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ABC Notation Player</title>
+    <script src="https://cdn.jsdelivr.net/npm/abcjs@6.5.2/dist/abcjs-basic-min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        textarea {
+            width: 80%;
+            height: 200px;
+            margin: 10px;
+            font-family: monospace;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        #sheet-music {
+            margin-top: 20px;
+        }
+        /* Style chord symbols for better alignment */
+        .abcjs-chord {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            fill: black;
+            text-anchor: middle; /* Center chords above notes */
+            font-weight: bold;
+        }
+        /* Ensure chords are vertically aligned and spaced */
+        .abcjs-annotation {
+            transform: translateY(-10px); /* Move chords closer to notes */
+        }
+    </style>
+</head>
+<body>
+    <h1>ABC Notation Player</h1>
+    <textarea id="abc-input">
+X:2
+T:Imperial March from Star Wars
+T:Darth Vader Theme
+R:misc
+C:John Williams, USA
+Z:id:hn-misc-2
+M:4/4
+L:1/8
+Q:1/4=120
+K:Bb
+"Gm"G2 G2 G2 "Ebm"E>B | "Gm"G2 "Ebm"E>B "Gm"G4 |
+"Gm"d2 d2 d2 "Ebm"e>B | ^F2 E>B "Gm"G4 |
+"Gm"g2 G>G g2 ^f>=f | "C#m"=e/^d/=e z ^G ^c2 =c>=B |
+"Ebm"_B/A/B z E ^F2 E>F | "Gm"B2 G>B d4 |
+"Eb"g2 G>G "Gm"g2 ^f>=f | "C#m"=e/^d/=e z ^G ^c2 =c>=B |
+"Ebm"_B/A/B z E ^F2 E>B | "Gm"G2 "Ebm"E>B "Gm"G4 ||
+    </textarea>
+    <br>
+    <button onclick="playABC()">Play</button>
+    <button onclick="stopABC()">Stop</button>
+    <div id="sheet-music"></div>
+
+    <script>
+        let synth = null; // Store synth instance for stopping playback
+
+        // Render sheet music
+        function renderSheetMusic(abc) {
+            ABCJS.renderAbc('sheet-music', abc, {
+                responsive: 'resize',
+                add_classes: true, // Enable CSS class for chords
+                chordSymbolOffset: 10, // Position chords 10px above notes
+                chordSymbolAlign: 'center' // Center chords above notes
+            });
+        }
+
+        // Play ABC notation
+        function playABC() {
+            // Stop any existing playback
+            if (synth) {
+                synth.stop();
+            }
+
+            const abc = document.getElementById('abc-input').value;
+            // Render sheet music
+            renderSheetMusic(abc);
+
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const visualObj = ABCJS.renderAbc('*', abc)[0];
+            synth = new ABCJS.synth.CreateSynth();
+
+            synth.init({
+                audioContext: audioContext,
+                visualObj: visualObj,
+                options: {
+                    soundFontUrl: "https://paulrosen.github.io/midi-js-soundfonts/abcjs/",
+                    program: 0, // Acoustic Grand Piano
+                    midiOutputType: 'link'
+                }
+            }).then(() => {
+                synth.prime().then(() => {
+                    synth.start();
+                });
+            }).catch((err) => {
+                console.error('Error playing ABC:', err);
+                alert('Error playing ABC notation. Check console for details.');
+            });
+        }
+
+        // Stop ABC playback
+        function stopABC() {
+            if (synth) {
+                synth.stop();
+                synth = null; // Clear synth reference
+            }
+        }
+
+        // Render sheet music on page load
+        window.onload = () => {
+            renderSheetMusic(document.getElementById('abc-input').value);
+        };
+    </script>
+</body>
+</html>
